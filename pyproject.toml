@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm[toml]>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smri-fm"
+dynamic = ["version"]
+description = "MedARC sMRI foundation model"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "ipython",
+    "jupyter",
+    "matplotlib",
+    "nibabel",
+    "numpy",
+    "omegaconf",
+    "pandas",
+    "pre-commit",
+    "pytest",
+    "scipy",
+    "torch==2.8.0",
+    "torchvision",
+    "tqdm",
+    "wandb",
+]
+
+[project.optional-dependencies]
+
+[tool.setuptools_scm]
+version_file = "src/_version.py"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+ignore = ["F722"]

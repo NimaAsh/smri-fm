@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+_version.py
+
+# IDE
+.vscode/
+
+# Virtual environment
+.venv/
+.python-version
+
+# Environment variables
+.env
+.env.*
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Local data directories
+**/data
+
+# Local scratch/tmp
+.scratch
+tmp
+.tmp*
