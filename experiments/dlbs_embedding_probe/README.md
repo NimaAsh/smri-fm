@@ -99,6 +99,30 @@ Inputs must be scalar 3D volumes. Raw 4D DWI series need to be converted to a
 defined scalar input such as a b0 or b1000 image first, then referenced through a
 separate manifest column.
 
+## Native sMRI-MAE ViT features
+
+Native `smri_mae` checkpoints contain the architecture and encoder weights in the
+`.pth` file. This extractor loads that format directly, uses the checkpoint's native
+image size, and writes both CLS-token and mean visible-patch embeddings in one pass.
+It applies the Asparagus classification/regression volume normalization and
+pad/center-crop, then passes only nonzero brain-containing patches to the encoder.
+
+```bash
+uv run python experiments/dlbs_embedding_probe/scripts/extract_smri_mae_features.py \
+    --manifest DLBS/dlbs_image_manifest.csv \
+    --checkpoint /path/to/checkpoint-last.pth \
+    --modalities T1w,T2w \
+    --device cuda \
+    --amp \
+    --cls-output DLBS/features/smri_mae_cls.csv \
+    --mean-output DLBS/features/smri_mae_mean.csv
+```
+
+Omitting `--mask-ratio` evaluates all brain-containing patches. Set it explicitly
+only for a controlled masked-input experiment; the value and random seed are written
+to metadata. Extraction uses batch size one so variable brain masks do not trim
+tokens from other scans in the same batch.
+
 ## Run
 
 Evaluate every modality present in a feature CSV:
