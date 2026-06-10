@@ -73,6 +73,32 @@ rows must use the same feature dimensionality. The manifest is an extraction
 inventory; raw images do not enter the probe until a feature extractor has produced
 these vectors.
 
+## Asparagus ResEnc-B features
+
+Extract final-stage, globally averaged frozen features from an Asparagus ResEnc-B
+checkpoint. The extractor applies the same per-volume normalization and
+`128 x 128 x 128` pad/center-crop used by the Asparagus classification/regression
+evaluation pipeline.
+
+```bash
+uv run python experiments/dlbs_embedding_probe/scripts/extract_resenc_features.py \
+    --manifest DLBS/dlbs_image_manifest.csv \
+    --checkpoint /path/to/resenc_unet_b.ckpt \
+    --modalities T1w \
+    --device cuda \
+    --amp \
+    --output DLBS/features/resenc_b_t1w.csv
+```
+
+`--image-column` defaults to the manifest's raw `image_path`. To evaluate a
+different preprocessing recipe, add a column containing those NIfTI paths and pass
+its name explicitly. Use the same image column, target size, modalities, and probe
+seed for every checkpoint comparison.
+
+Inputs must be scalar 3D volumes. Raw 4D DWI series need to be converted to a
+defined scalar input such as a b0 or b1000 image first, then referenced through a
+separate manifest column.
+
 ## Run
 
 Evaluate every modality present in a feature CSV:
