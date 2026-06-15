@@ -16,6 +16,8 @@ IMAGE_RE = re.compile(
     r"(?P<body>.+)_(?P<modality>T1w|T2w|dwi|pet)$"
 )
 PET_AGE_PREFIX = {"18FAV45": "AgePETAmy", "18FAV1451": "AgePETTau"}
+EXPECTED_MODALITIES = {"T1w", "T2w", "dwi", "pet"}
+SOURCE_DATASET = "OpenNeuro ds004856"
 
 
 def strip_image_suffix(path: Path) -> str:
@@ -66,14 +68,12 @@ def load_participants(path: str | Path) -> dict[str, dict[str, str]]:
 
 
 def build_manifest(
-    t1_dir: str | Path,
-    extra_dir: str | Path,
+    image_dir: str | Path,
     participants_path: str | Path,
 ) -> list[dict[str, object]]:
-    """Return one manifest row per NIfTI file across all available modalities."""
+    """Return one manifest row per NIfTI file from a single BIDS source tree."""
     participants = load_participants(participants_path)
-    paths = list(Path(t1_dir).glob("*.nii*"))
-    paths.extend(Path(extra_dir).glob("sub-*/ses-*/*/*.nii*"))
+    paths = list(Path(image_dir).glob("sub-*/ses-*/*/*.nii*"))
     rows = []
     for path in sorted(paths):
         parsed = parse_image(path)
@@ -82,10 +82,23 @@ def build_manifest(
         column = age_column(parsed["modality"], parsed["tracer"], parsed["wave"])
         participant = participants.get(parsed["participant_id"], {})
         age = clean_float(participant.get(column)) if column else None
-        rows.append({**parsed, "age": age, "age_source": column or ""})
+        rows.append(
+            {
+                **parsed,
+                "source_dataset": SOURCE_DATASET,
+                "age": age,
+                "age_source": column or "",
+            }
+        )
 
     if not rows:
         raise ValueError("No DLBS NIfTI images found")
+    missing_modalities = EXPECTED_MODALITIES - {str(row["modality"]) for row in rows}
+    if missing_modalities:
+        raise ValueError(
+            "DLBS OpenNeuro inventory is incomplete; missing modalities: "
+            f"{sorted(missing_modalities)}"
+        )
     pat_ids = [str(row["pat_id"]) for row in rows]
     if len(pat_ids) != len(set(pat_ids)):
         raise ValueError("DLBS image inventory contains duplicate pat_id values")
@@ -146,8 +159,11 @@ def summarize_manifest(rows: list[dict[str, object]]) -> dict[str, object]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--t1-dir", default="DLBS/images")
-    parser.add_argument("--extra-dir", default="DLBS/openneuro_extra")
+    parser.add_argument(
+        "--image-dir",
+        default="DLBS/openneuro_extra",
+        help="Single OpenNeuro BIDS tree containing every modality, including T1w",
+    )
     parser.add_argument("--participants", default="DLBS/participants.tsv")
     parser.add_argument("--output", default="DLBS/dlbs_image_manifest.csv")
     parser.add_argument("--summary", default="DLBS/dlbs_image_manifest_summary.json")
@@ -156,7 +172,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    rows = build_manifest(args.t1_dir, args.extra_dir, args.participants)
+    rows = build_manifest(args.image_dir, args.participants)
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="") as handle:

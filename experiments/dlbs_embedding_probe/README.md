@@ -32,16 +32,31 @@ PET contains two tracers:
 | `18FAV45` | Florbetapir, amyloid | 551 | 295 | W1: 295, W2: 180, W3: 76 |
 | `18FAV1451` | Flortaucipir, tau | 184 | 154 | W2: 60, W3: 124 |
 
-The complete inventory comes from `DLBS/images` (T1w) and
-`DLBS/openneuro_extra` (T2w/FLAIR, DWI, and PET). Recreate it with:
+The complete inventory comes from one OpenNeuro BIDS tree,
+`DLBS/openneuro_extra`, for T1w, T2w/FLAIR, DWI, and PET. This keeps upstream
+data provenance consistent across modalities. Recreate it with:
 
 ```bash
-uv run python experiments/dlbs_embedding_probe/scripts/build_dlbs_manifest.py
+# Add T1w to an existing DLBS OpenNeuro download if needed.
+aws s3 sync --no-sign-request \
+    s3://openneuro.org/ds004856/ DLBS/openneuro_extra/ \
+    --exclude '*' \
+    --include 'sub-*/ses-*/anat/*_T1w.nii.gz'
+
+uv run python experiments/dlbs_embedding_probe/scripts/build_dlbs_manifest.py \
+    --image-dir DLBS/openneuro_extra
 ```
 
 This writes `DLBS/dlbs_image_manifest.csv` plus a JSON summary. Each row records
-the image path, participant, wave, modality, PET tracer when applicable, and the
-age at that acquisition.
+the `OpenNeuro ds004856` source identifier, image path, participant, wave,
+modality, PET tracer when applicable, and the age at that acquisition.
+The manifest command fails if any expected modality is absent, which catches an
+OpenNeuro tree that has not yet had its T1w files downloaded.
+
+Feature CSVs and probe results created before this single-source change used T1w
+from `DLBS/images` and must be regenerated before comparing T1w with other
+modalities. The feature extractors still apply their documented model-input
+normalization and pad/center-crop after loading each OpenNeuro NIfTI.
 
 ## Age labels
 
