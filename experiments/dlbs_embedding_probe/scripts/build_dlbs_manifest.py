@@ -161,10 +161,12 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--image-dir",
-        default="DLBS/openneuro_extra",
+        default="DLBS/openneuro_ds004856",
         help="Single OpenNeuro BIDS tree containing every modality, including T1w",
     )
-    parser.add_argument("--participants", default="DLBS/participants.tsv")
+    parser.add_argument(
+        "--participants", default="DLBS/openneuro_ds004856/participants.tsv"
+    )
     parser.add_argument("--output", default="DLBS/dlbs_image_manifest.csv")
     parser.add_argument("--summary", default="DLBS/dlbs_image_manifest_summary.json")
     return parser.parse_args()

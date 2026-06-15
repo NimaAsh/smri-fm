@@ -32,26 +32,45 @@ PET contains two tracers:
 | `18FAV45` | Florbetapir, amyloid | 551 | 295 | W1: 295, W2: 180, W3: 76 |
 | `18FAV1451` | Flortaucipir, tau | 184 | 154 | W2: 60, W3: 124 |
 
-The complete inventory comes from one OpenNeuro BIDS tree,
-`DLBS/openneuro_extra`, for T1w, T2w/FLAIR, DWI, and PET. This keeps upstream
-data provenance consistent across modalities. Recreate it with:
+The complete inventory comes from one OpenNeuro BIDS tree for T1w, T2w/FLAIR,
+DWI, and PET. This keeps upstream image and participant-table provenance
+consistent across modalities.
+
+### Download from scratch
+
+Download the complete official DLBS dataset (`OpenNeuro ds004856`) without
+filters. `aws s3 sync` is resumable, so the same command can also complete a
+partial local copy:
 
 ```bash
-# Add T1w to an existing DLBS OpenNeuro download if needed.
-aws s3 sync --no-sign-request \
-    s3://openneuro.org/ds004856/ DLBS/openneuro_extra/ \
-    --exclude '*' \
-    --include 'sub-*/ses-*/anat/*_T1w.nii.gz'
+mkdir -p DLBS/openneuro_ds004856
 
+aws s3 sync --no-sign-request \
+    s3://openneuro.org/ds004856/ \
+    DLBS/openneuro_ds004856/
+```
+
+This intentionally downloads the complete dataset, including metadata and
+modalities not currently consumed by the structural-MRI probe. Keep it on shared
+or project data storage rather than inside the git repository.
+
+### Build and verify the manifest
+
+```bash
 uv run python experiments/dlbs_embedding_probe/scripts/build_dlbs_manifest.py \
-    --image-dir DLBS/openneuro_extra
+    --image-dir DLBS/openneuro_ds004856 \
+    --participants DLBS/openneuro_ds004856/participants.tsv
+
+jq '.modalities | map_values({n_files, n_sessions, n_subjects, n_with_age})' \
+    DLBS/dlbs_image_manifest_summary.json
 ```
 
 This writes `DLBS/dlbs_image_manifest.csv` plus a JSON summary. Each row records
 the `OpenNeuro ds004856` source identifier, image path, participant, wave,
 modality, PET tracer when applicable, and the age at that acquisition.
 The manifest command fails if any expected modality is absent, which catches an
-OpenNeuro tree that has not yet had its T1w files downloaded.
+incomplete OpenNeuro download. The summary should report nonzero counts for T1w,
+T2w, DWI, and PET before feature extraction begins.
 
 Feature CSVs and probe results created before this single-source change used T1w
 from `DLBS/images` and must be regenerated before comparing T1w with other
