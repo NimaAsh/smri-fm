@@ -201,3 +201,12 @@ The generic implementation is `scripts/linear_probe.py` (206 lines). Dataset
 inventory and DLBS label joining are separate dataset-specific modules. Baselines
 are valid comparisons only when they use the same cohort, targets, and folds; they
 are not dependencies of this probe.
+
+## Example results
+
+Out-of-fold ridge predictions on OpenNeuro-only DLBS (ds004856), 464 subjects,
+participant-grouped 5-fold nested CV. DLBS is a FOMO source dataset.
+
+![ResEnc-B predicted vs actual](docs/figures/resenc_predicted_vs_actual_clean.png)
+
+![MAE ViT-L predicted vs actual](docs/figures/mihir_mae_predicted_vs_actual_clean.png)
