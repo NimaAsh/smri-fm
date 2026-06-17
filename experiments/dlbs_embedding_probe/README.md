@@ -157,6 +157,33 @@ only for a controlled masked-input experiment; the value and random seed are wri
 to metadata. Extraction uses batch size one so variable brain masks do not trim
 tokens from other scans in the same batch.
 
+## Neuro-JEPA ViT features
+
+Neuro-JEPA checkpoints from `scripts/slurm/pretrain_fomo300.sh` save separate
+`encoder`, `target_encoder`, and `predictor` states. The DLBS extractor loads the
+frozen encoder by default, builds the architecture from the pretraining YAML, and
+writes one pooled patch-token embedding per scan. It uses the same DLBS manifest
+and Asparagus classification/regression volume normalization as the other frozen
+extractors in this probe.
+
+```bash
+uv run python experiments/dlbs_embedding_probe/scripts/extract_neurojepa_features.py \
+    --manifest DLBS/dlbs_image_manifest.csv \
+    --neurojepa-repo /admin/home/nima.ashjaee/smri-proj/Neuro-JEPA \
+    --config /admin/home/nima.ashjaee/smri-proj/Neuro-JEPA/configs/pretrain/pretrain_fomo300.yaml \
+    --checkpoint /admin/home/nima.ashjaee/smri-proj/Neuro-JEPA/runs/pretrain_fomo300/ckpt/latest.pt \
+    --modalities T1w,T2w \
+    --device cuda \
+    --amp \
+    --pooling mean \
+    --output DLBS/features/neurojepa_fomo300_encoder_mean_t1w_t2w.csv
+```
+
+Use `--checkpoint-key target_encoder` to evaluate the EMA target encoder instead
+of the online encoder. `--pooling mean` averages all patch tokens, matching the
+usual frozen-backbone linear-probe setup; `--pooling foreground_mean` averages
+only patches with nonzero voxels after preprocessing.
+
 ## Run
 
 Evaluate every modality present in a feature CSV:
