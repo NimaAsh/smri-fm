@@ -25,6 +25,7 @@ dependencies = [
     "pre-commit",
     "pytest",
     "pyyaml",
+    "s3fs",
     "scikit-learn",
     "scipy",
     "seaborn",
