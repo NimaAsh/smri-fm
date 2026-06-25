@@ -35,6 +35,9 @@ SKIP_MISSING="${SKIP_MISSING:-true}"
 OFFICIAL_RESENC_CKPT="${OFFICIAL_RESENC_CKPT:-${FOMO_ROOT}/share/official_amaes_resenc_b_fomo300k/resenc_unet_b.ckpt}"
 NIMA_PDF1M_RESENC_CKPT="${NIMA_PDF1M_RESENC_CKPT:-${FOMO_ROOT}/share/pt902_pdf1m_resenc6m_55204/last.ckpt}"
 
+MIHIR_MAE_CKPT="${MIHIR_MAE_CKPT:-/data/mihir-stuff/smri-pretrained/pretrain_full_90_10_h100/checkpoint-last.pth}"
+SMRI_MAE_POOLS="${SMRI_MAE_POOLS:-cls reg patch}"
+
 PRETRAIN_FOMO300_CONFIG="${PRETRAIN_FOMO300_CONFIG:-${NEUROJEPA_REPO}/configs/pretrain/pretrain_fomo300.yaml}"
 FAITHFUL_PRE96_CONFIG="${FAITHFUL_PRE96_CONFIG:-${NEUROJEPA_REPO}/configs/pretrain/pretrain_fomo300_faithful_pre96.yaml}"
 
@@ -153,6 +156,32 @@ if should_run_model_set neurojepa; then
         echo "FAILED: ${stem} ${task}"
         failures=$((failures + 1))
       fi
+    done
+  done
+fi
+
+if should_run_model_set smri_mae; then
+  SMRI_MAE_SPECS=(
+    "mihir_mae_vitl_full90_10|${MIHIR_MAE_CKPT}"
+  )
+  IFS=' ' read -r -a POOL_ARRAY <<< "${SMRI_MAE_POOLS}"
+
+  for spec in "${SMRI_MAE_SPECS[@]}"; do
+    IFS='|' read -r stem ckpt <<< "${spec}"
+    if ! require_file "${ckpt}"; then
+      echo "skipping ${stem}"
+      continue
+    fi
+    # smri_mae's transform casts to fp16 internally and its builder takes no amp arg.
+    for pool in "${POOL_ARRAY[@]}"; do
+      for task in "${TASK_ARRAY[@]}"; do
+        if ! run_eval smri_mae "${stem}_${pool}" "${task}" \
+          "model_kwargs.ckpt_path=${ckpt}" \
+          "model_kwargs.global_pool=${pool}"; then
+          echo "FAILED: ${stem}_${pool} ${task}"
+          failures=$((failures + 1))
+        fi
+      done
     done
   done
 fi

@@ -5,6 +5,7 @@
 #   OUT_ROOT=/data/$USER/internal_smri_evals_test scripts/internal_evals/submit_linear_matrix.sh
 #   TASKS="dlbs_age adni_age" scripts/internal_evals/submit_linear_matrix.sh
 #   MODEL_SET=resenc scripts/internal_evals/submit_linear_matrix.sh
+#   MODEL_SET=smri_mae scripts/internal_evals/submit_linear_matrix.sh   # Mihir's MAE ViT-L, pools cls/reg/patch
 
 set -euo pipefail
 
