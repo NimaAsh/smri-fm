@@ -17,6 +17,10 @@ set -euo pipefail
 REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
 cd "${REPO_ROOT}"
 
+# raise the open-file soft limit to the hard max; large HF datasets + DataLoader
+# workers otherwise hit "Too many open files".
+ulimit -n "$(ulimit -Hn)" 2>/dev/null || true
+
 export PYTHONPATH="${REPO_ROOT}/src:${PYTHONPATH:-}"
 export HF_HOME="${HF_HOME:-/data/${USER}/hf_cache}"
 export HF_DATASETS_CACHE="${HF_DATASETS_CACHE:-${HF_HOME}/datasets}"

@@ -21,6 +21,11 @@ from evaluation.models.registry import create_model, list_models
 from evaluation.tasks.base import Task
 from evaluation.tasks.registry import create_task, list_tasks
 
+# Large datasets + multi-worker DataLoaders exhaust file descriptors under torch's
+# default "file_descriptor" sharing strategy ("Too many open files"); the file-system
+# strategy shares worker tensors by name instead of by fd.
+torch.multiprocessing.set_sharing_strategy("file_system")
+
 DEFAULT_CONFIG = Path(__file__).parent / "config/default_linear.yaml"
 
 logger = logging.getLogger(__name__)
