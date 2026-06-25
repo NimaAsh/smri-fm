@@ -36,7 +36,9 @@ OFFICIAL_RESENC_CKPT="${OFFICIAL_RESENC_CKPT:-${FOMO_ROOT}/share/official_amaes_
 NIMA_PDF1M_RESENC_CKPT="${NIMA_PDF1M_RESENC_CKPT:-${FOMO_ROOT}/share/pt902_pdf1m_resenc6m_55204/last.ckpt}"
 
 MIHIR_MAE_CKPT="${MIHIR_MAE_CKPT:-/data/mihir-stuff/smri-pretrained/pretrain_full_90_10_h100/checkpoint-last.pth}"
-SMRI_MAE_POOLS="${SMRI_MAE_POOLS:-cls reg patch}"
+# reg pooling needs reg_tokens>0; mae_vit_large pretrains with reg_tokens=0, so its
+# reg_embeds are None. Default to cls+patch; override to add reg for register-bearing ckpts.
+SMRI_MAE_POOLS="${SMRI_MAE_POOLS:-cls patch}"
 
 PRETRAIN_FOMO300_CONFIG="${PRETRAIN_FOMO300_CONFIG:-${NEUROJEPA_REPO}/configs/pretrain/pretrain_fomo300.yaml}"
 FAITHFUL_PRE96_CONFIG="${FAITHFUL_PRE96_CONFIG:-${NEUROJEPA_REPO}/configs/pretrain/pretrain_fomo300_faithful_pre96.yaml}"

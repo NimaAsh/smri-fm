@@ -84,14 +84,15 @@ class SmriMaeTransform:
         mask = data > data.mean()
 
         # z-score over brain-mask voxels (matches pretraining); background -> 0.
-        # Raw intensities reach ~1e6, so this must happen before the fp16 cast.
+        # Raw intensities reach ~1e6, so this must happen before normalization.
         brain = data[mask]
         # population std (÷N, correction=0) to match the pretraining normalization.
         mean, std = brain.mean(), brain.std(correction=0).clamp_min(1e-6)
         data = torch.where(mask, (data - mean) / std, 0.0)
 
-        # fp16 and add channel dim
-        data = data.half().unsqueeze(0)
+        # add channel dim. keep fp32: the encoder weights are fp32, so a fp16 cast
+        # here triggers a Half/Float matmul in patch_embed.
+        data = data.unsqueeze(0)
         mask = mask.unsqueeze(0)
 
         sample = {"image": data, "mask": mask}
