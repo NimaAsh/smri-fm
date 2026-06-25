@@ -29,7 +29,7 @@ BATCH_SIZE="${BATCH_SIZE:-1}"
 NUM_WORKERS="${NUM_WORKERS:-8}"
 AMP="${AMP:-true}"
 MODEL_SET="${MODEL_SET:-all}"
-TASKS="${TASKS:-dlbs_age adni_age adni_sex adni_ad_cn adni_ad_cn_bag}"
+TASKS="${TASKS:-dlbs_age dlbs_mmse dlbs_edu dlbs_bmi adni_age adni_sex adni_ad_cn adni_ad_cn_bag}"
 SKIP_MISSING="${SKIP_MISSING:-true}"
 
 OFFICIAL_RESENC_CKPT="${OFFICIAL_RESENC_CKPT:-${FOMO_ROOT}/share/official_amaes_resenc_b_fomo300k/resenc_unet_b.ckpt}"

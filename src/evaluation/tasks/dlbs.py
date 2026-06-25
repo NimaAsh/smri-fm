@@ -85,3 +85,37 @@ def dlbs_sex(n_splits: int = 5, seed: int = 0) -> ColumnTask:
         splitter=StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed),
         target_column="Sex",
     )
+
+
+@register_task
+def dlbs_mmse(n_splits: int = 5, seed: int = 0) -> ColumnTask:
+    # MMSE is near-ceiling in this healthy cohort, so expect limited target variance.
+    return ColumnTask(
+        name="dlbs_mmse",
+        kind="regression",
+        data=load_dlbs_t1w(),
+        splitter=KFold(n_splits=n_splits, shuffle=True, random_state=seed),
+        target_column="MMSE_W1",
+    )
+
+
+@register_task
+def dlbs_edu(n_splits: int = 5, seed: int = 0) -> ColumnTask:
+    return ColumnTask(
+        name="dlbs_edu",
+        kind="regression",
+        data=load_dlbs_t1w(),
+        splitter=KFold(n_splits=n_splits, shuffle=True, random_state=seed),
+        target_column="EduComp",
+    )
+
+
+@register_task
+def dlbs_bmi(n_splits: int = 5, seed: int = 0) -> ColumnTask:
+    return ColumnTask(
+        name="dlbs_bmi",
+        kind="regression",
+        data=load_dlbs_t1w(),
+        splitter=KFold(n_splits=n_splits, shuffle=True, random_state=seed),
+        target_column="BMI_W1",
+    )
