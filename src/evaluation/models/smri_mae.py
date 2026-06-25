@@ -50,6 +50,13 @@ class SmriMaeTransform:
         """
         TODO(mihir): check
         """
+        # HF datasets' Nifti feature decodes to a lazy wrapper that as_reoriented
+        # can't rebuild (its __init__ lacks the 3-arg Nifti1Image signature).
+        # Materialize a plain Nifti1Image from the (already-scaled) data + affine
+        # first; drop the source header so get_fdata below doesn't re-apply
+        # scl_slope/scl_inter.
+        img = nib.Nifti1Image(np.asarray(img.dataobj, dtype=np.float32), img.affine)
+
         # reorient to RAS
         img = nib.as_closest_canonical(img)
 
