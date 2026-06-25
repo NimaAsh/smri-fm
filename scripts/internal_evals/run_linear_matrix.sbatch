@@ -33,6 +33,7 @@ BATCH_SIZE="${BATCH_SIZE:-1}"
 NUM_WORKERS="${NUM_WORKERS:-8}"
 AMP="${AMP:-true}"
 MODEL_SET="${MODEL_SET:-all}"
+NEUROJEPA_FILTER="${NEUROJEPA_FILTER:-}"   # optional substring; run only matching neurojepa stems (e.g. "cooldown")
 TASKS="${TASKS:-dlbs_age dlbs_mmse dlbs_edu dlbs_bmi adni_age adni_sex adni_ad_cn adni_ad_cn_bag}"
 SKIP_MISSING="${SKIP_MISSING:-true}"
 
@@ -144,6 +145,9 @@ if should_run_model_set neurojepa; then
 
   for spec in "${NEUROJEPA_SPECS[@]}"; do
     IFS='|' read -r stem ckpt config <<< "${spec}"
+    if [[ -n "${NEUROJEPA_FILTER}" && "${stem}" != *"${NEUROJEPA_FILTER}"* ]]; then
+      continue
+    fi
     if ! require_file "${ckpt}"; then
       echo "skipping ${stem}"
       continue
