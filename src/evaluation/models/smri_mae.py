@@ -62,7 +62,9 @@ class SmriMaeTransform:
 
         # note, shape is (X, Y, Z) in contiguous F-order
         data = img.get_fdata(dtype=np.float32)
-        data = torch.from_numpy(data)
+        # as_closest_canonical flips axes for non-RAS inputs, yielding negative
+        # strides that torch.from_numpy rejects; force a contiguous copy.
+        data = torch.from_numpy(np.ascontiguousarray(data))
         spacing = img.header.get_zooms()
 
         # resize
