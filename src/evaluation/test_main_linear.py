@@ -50,8 +50,9 @@ def test_run_linear_regression_recovers_linear_target():
     )
 
     metrics = _run(task)
-    assert set(metrics) == {"tput", "summary", "folds"}
+    assert set(metrics) == {"tput", "summary", "folds", "predictions"}
     assert len(metrics["folds"]) == 3
+    assert len(metrics["predictions"]) == 30
     assert metrics["summary"]["mae"] < 0.1
 
 
@@ -102,7 +103,9 @@ def test_main_writes_run_artifacts(tmp_path):
 
     (summary_path,) = list(tmp_path.rglob("summary.csv"))
     run_dir = summary_path.parent
-    assert {"metrics.json", "config.yaml", "log.txt"} <= {p.name for p in run_dir.iterdir()}
+    assert {"metrics.json", "config.yaml", "log.txt", "predictions.csv", "scatter.png"} <= {
+        p.name for p in run_dir.iterdir()
+    }
 
     row = pd.read_csv(summary_path)
     assert {"model", "task", "tput"} <= set(row.columns)

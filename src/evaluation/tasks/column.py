@@ -36,6 +36,7 @@ class ColumnTask:
     def split(self) -> Iterator[tuple[np.ndarray, np.ndarray]]:
         if isinstance(self.splitter, list):
             yield from self.splitter
+            return
 
         indices = np.arange(len(self.data))
         targets = np.asarray(self.data[self.target_column])

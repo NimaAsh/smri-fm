@@ -53,6 +53,14 @@ def test_split_covers_all_and_is_disjoint():
         assert set(train).isdisjoint(test)
 
 
+def test_fixed_split_list_yields_once():
+    split = (np.arange(10), np.arange(10, 20))
+    folds = list(_task(splitter=[split]).split())
+    assert len(folds) == 1
+    assert np.array_equal(folds[0][0], split[0])
+    assert np.array_equal(folds[0][1], split[1])
+
+
 def test_metrics_dispatch_on_kind():
     idx = np.arange(4)
     reg = _task(target="age", kind="regression", n=4)

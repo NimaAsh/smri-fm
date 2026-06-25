@@ -18,8 +18,33 @@ Outputs save in `<output_root>/<name>/` (default name `<model>__<task>`):
 
 - `summary.csv`: one row of `model, task, tput, <metric>, <metric>_std`
 - `metrics.json`: the summary plus per-fold scores
+- `predictions.csv`: out-of-fold `sample_index, y_true, y_pred` rows
+- `scatter.png`: regression-only predicted-vs-true scatter plot
 - `config.yaml`: the fully resolved config
 - `log.txt`: run log
+
+## SLURM Matrix
+
+Submit the standard internal checkpoint matrix from the repo root:
+
+```bash
+scripts/internal_evals/submit_linear_matrix.sh
+```
+
+By default this evaluates:
+
+- ResEnc checkpoints: official FOMO-MRI AMAES ResEnc-B and Nima's PDF-1M ResEnc-B
+- Neuro-JEPA checkpoints: FOMO300 `e60`, `latest`, `cooldown/latest`,
+  `faithful_pre96/latest`, and `faithful_pre96/cooldown/latest`
+- Tasks: `dlbs_age`, `adni_age`, `adni_sex`, `adni_ad_cn`, `adni_ad_cn_bag`
+
+Useful overrides:
+
+```bash
+TASKS="dlbs_age adni_age" scripts/internal_evals/submit_linear_matrix.sh
+MODEL_SET=resenc scripts/internal_evals/submit_linear_matrix.sh
+OUT_ROOT=/data/$USER/internal_smri_evals_test scripts/internal_evals/submit_linear_matrix.sh
+```
 
 ## Architecture
 

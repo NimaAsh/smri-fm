@@ -115,14 +115,29 @@ def run_linear(
     fit = ESTIMATORS[task.kind]
 
     fold_metrics = []
+    prediction_rows = []
     for fold, (train_idx, test_idx) in enumerate(task.split()):
         estimator = fit(X[train_idx], y[train_idx], seed)
         pred = estimator.predict(X[test_idx])
         scores = task.metrics(y[test_idx], pred, test_idx)
         fold_metrics.append(scores)
+        for sample_index, y_true, y_pred in zip(test_idx, y[test_idx], pred):
+            prediction_rows.append(
+                {
+                    "fold": fold,
+                    "sample_index": int(sample_index),
+                    "y_true": y_true.item() if hasattr(y_true, "item") else y_true,
+                    "y_pred": y_pred.item() if hasattr(y_pred, "item") else y_pred,
+                }
+            )
         logger.info(f"fold {fold}: " + " ".join(f"{k}={v:.4f}" for k, v in scores.items()))
 
-    metrics = {"tput": tput, "summary": aggregate_folds(fold_metrics), "folds": fold_metrics}
+    metrics = {
+        "tput": tput,
+        "summary": aggregate_folds(fold_metrics),
+        "folds": fold_metrics,
+        "predictions": prediction_rows,
+    }
     return metrics
 
 
@@ -165,6 +180,45 @@ def git_sha() -> str:
         return out.stdout.strip() or "unknown"
     except Exception:
         return "unknown"
+
+
+def write_regression_scatter(predictions: pd.DataFrame, summary: dict[str, float], path: Path) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    y_true = pd.to_numeric(predictions["y_true"], errors="coerce")
+    y_pred = pd.to_numeric(predictions["y_pred"], errors="coerce")
+    valid = y_true.notna() & y_pred.notna()
+    y_true = y_true[valid].to_numpy()
+    y_pred = y_pred[valid].to_numpy()
+    if len(y_true) == 0:
+        return
+
+    lower = float(min(y_true.min(), y_pred.min()))
+    upper = float(max(y_true.max(), y_pred.max()))
+    margin = 0.05 * max(upper - lower, 1.0)
+    lower -= margin
+    upper += margin
+
+    fig, ax = plt.subplots(figsize=(5.5, 5.5))
+    ax.scatter(y_true, y_pred, s=20, alpha=0.65)
+    ax.plot([lower, upper], [lower, upper], color="black", linewidth=1, linestyle="--")
+    ax.set_xlim(lower, upper)
+    ax.set_ylim(lower, upper)
+    ax.set_xlabel("True")
+    ax.set_ylabel("Predicted")
+    title_bits = []
+    for key in ("mae", "rmse", "r2"):
+        if key in summary:
+            title_bits.append(f"{key.upper()}={summary[key]:.3f}")
+    if title_bits:
+        ax.set_title("  ".join(title_bits))
+    ax.grid(alpha=0.2)
+    fig.tight_layout()
+    fig.savefig(path, dpi=160)
+    plt.close(fig)
 
 
 def main(
@@ -213,6 +267,11 @@ def main(
         num_workers=cfg.num_workers,
         seed=cfg.seed,
     )
+
+    predictions = pd.DataFrame(metrics.pop("predictions"))
+    predictions.to_csv(run_dir / "predictions.csv", index=False)
+    if task.kind == "regression":
+        write_regression_scatter(predictions, metrics["summary"], run_dir / "scatter.png")
 
     metrics = {"model": cfg.model, "task": cfg.task, **metrics}
     (run_dir / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
